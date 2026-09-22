@@ -16,16 +16,9 @@
 package com.reidsync.kxjsonpatch
 
 import resources.testdata.TestData_ADD
-import kotlin.test.Test
+import resources.testdata.TestData_ADD_UNSUPPORTED
 
 class AddOperationTest : AbstractTest() {
-    //@org.junit.runners.Parameterized.Parameters
-    override fun data(): Collection<PatchTestCase> {
-        return PatchTestCase.load(TestData_ADD)
-    }
-
-    @Test
-    fun childTest() {
-        test()
-    }
+    override fun data(): Collection<PatchTestCase> =
+        PatchTestCase.load(TestData_ADD) + PatchTestCase.load(TestData_ADD_UNSUPPORTED)
 }

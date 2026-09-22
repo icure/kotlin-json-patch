@@ -16,19 +16,9 @@
 package com.reidsync.kxjsonpatch
 
 import resources.testdata.TestData_REMOVE
-import kotlin.test.Test
+import resources.testdata.TestData_REMOVE_UNSUPPORTED
 
-/**
- * @author ctranxuan (streamdata.io).
- */
 class RemoveOperationTest : AbstractTest() {
-//    @org.junit.runners.Parameterized.Parameters
-    override fun data(): Collection<PatchTestCase> {
-        return PatchTestCase.load(TestData_REMOVE)
-    }
-
-    @Test
-    fun childTest() {
-        test()
-    }
+    override fun data(): Collection<PatchTestCase> =
+        PatchTestCase.load(TestData_REMOVE) + PatchTestCase.load(TestData_REMOVE_UNSUPPORTED)
 }

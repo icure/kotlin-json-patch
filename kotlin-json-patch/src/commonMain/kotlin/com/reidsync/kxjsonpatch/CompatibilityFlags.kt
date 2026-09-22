@@ -20,12 +20,14 @@ package com.reidsync.kxjsonpatch
  * Created by tomerga on 04/09/2016.
  */
 enum class CompatibilityFlags {
+    /** Treat a missing `value` member on add/replace/test as JSON null instead of rejecting the patch. */
     MISSING_VALUES_AS_NULLS;
 
 
     companion object {
+        /** Strict RFC 6902 behaviour: no compatibility flags. */
         fun defaults(): Set<CompatibilityFlags> {
-            return setOf(CompatibilityFlags.MISSING_VALUES_AS_NULLS)
+            return emptySet()
         }
     }
 }

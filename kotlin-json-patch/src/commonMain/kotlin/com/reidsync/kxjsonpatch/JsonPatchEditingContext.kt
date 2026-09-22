@@ -14,12 +14,18 @@
  * limitations under the License.
 */
 
-package com.reidsync.kxjsonpatch;
+package com.reidsync.kxjsonpatch
 
+import kotlinx.serialization.json.JsonElement
 
-import kotlinx.serialization.json.*
-
+/**
+ * Receives the operations of a patch, in order. Paths are decoded RFC 6901 reference tokens
+ * (see [JsonPointer]); an empty list designates the whole document.
+ */
 interface JsonPatchEditingContext {
+    /** The document as edited so far. */
+    val document: JsonElement
+
     fun remove(path: List<String>)
     fun replace(path: List<String>, value: JsonElement)
     fun add(path: List<String>, value: JsonElement)

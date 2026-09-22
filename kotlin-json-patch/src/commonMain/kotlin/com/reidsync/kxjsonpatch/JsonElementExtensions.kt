@@ -1,7 +1,3 @@
-package com.reidsync.kxjsonpatch
-
-import kotlinx.serialization.json.*
-
 /*
  * Copyright 2023 Reid Byun.
  *
@@ -18,106 +14,71 @@ import kotlinx.serialization.json.*
  * limitations under the License.
 */
 
-/*
-*  JsonElement Extensions
-* */
+package com.reidsync.kxjsonpatch
 
-fun JsonElement.apply(patch: JsonElement): JsonElement {
-	return JsonPatch.apply(patch, this)
-}
-
-fun JsonElement.generatePatch(with: JsonElement): JsonElement {
-	return JsonDiff.asJson(this, with)
-}
-
-internal fun JsonElement.isContainerNode(): Boolean {
-	return this is JsonArray || this is JsonObject
-}
-
-internal fun JsonElement.deepCopy(): JsonElement {
-	return when(this) {
-		is JsonArray -> this.jsonArray.copy {}
-		is JsonObject -> this.jsonObject.copy {}
-		is JsonNull -> JsonNull // An order of checking type between JsonNull and JsonPrimitive makes difference.
-		is JsonPrimitive -> this /* Todo check */
-		else -> this /* Todo check */
-	}
-}
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 
 /*
-* JsonArray Extensions
-* */
-internal fun JsonArray.add(value_: JsonElement?): JsonArray {
-	val value=value_ ?: JsonNull
-	return copy { add(value) }
-}
+ * Public convenience API
+ */
 
-internal fun JsonArray.insert(index: Int, value_: JsonElement?): JsonArray {
-	val value=value_ ?: JsonNull
-	return if(index>=size) {
-		this.add(value)
-	}
-	else if(index<0) {
-		this.copy { add(0, value)}
-	}
-	else {
-		this.copy { add(index, value) }
-	}
-}
+/** Applies [patch] (an RFC 6902 document) to this element and returns the result. This element is not modified. */
+fun JsonElement.apply(patch: JsonElement): JsonElement = JsonPatch.apply(patch, this)
 
-internal fun JsonArray.set(index: Int, value_: JsonElement?): JsonArray {
-	val value=value_ ?: JsonNull
-	if(index>=size) {
-		throw IndexOutOfBoundsException("")
-	}
-	return copy { this[index] = value }
-}
-
-internal fun JsonArray.remove(index:Int): JsonArray {
-	return copy { removeAt(index) }
-}
-
-private inline fun JsonArray.copy(mutatorBlock: MutableList<JsonElement>.() -> Unit): JsonArray {
-	return JsonArray(this.toMutableList().apply(mutatorBlock))
-}
-
+/** Generates an RFC 6902 patch that transforms this element into [with]. */
+fun JsonElement.generatePatch(with: JsonElement): JsonElement = JsonDiff.asJson(this, with)
 
 /*
-* JsonObject Extensions
-* */
-internal fun JsonObject.add(key: String, value_: JsonElement?): JsonObject {
-	val value=value_ ?: JsonNull
-	return copy {
-		this[key] = value
-	}
+ * RFC 6902 section 4.6 equality: strings by characters, numbers by numeric value, arrays element-wise,
+ * objects member-wise regardless of order, literals by identity.
+ */
+internal fun JsonElement.jsonEquals(other: JsonElement): Boolean = when {
+    this is JsonNull || other is JsonNull -> this is JsonNull && other is JsonNull
+    this is JsonPrimitive && other is JsonPrimitive -> primitiveEquals(this, other)
+    this is JsonArray && other is JsonArray -> size == other.size && indices.all { this[it].jsonEquals(other[it]) }
+    this is JsonObject && other is JsonObject ->
+        size == other.size && all { (key, value) -> other[key]?.let { value.jsonEquals(it) } ?: false }
+    else -> false
 }
 
-internal fun JsonObject.remove(key: String): JsonObject {
-	return copy { remove(key) }
+private fun primitiveEquals(a: JsonPrimitive, b: JsonPrimitive): Boolean {
+    if (a.isString || b.isString) return a.isString && b.isString && a.content == b.content
+    if (a.content == b.content) return true // same literal (booleans, or numbers with identical lexical form)
+    val la = a.content.toLongOrNull()
+    val lb = b.content.toLongOrNull()
+    if (la != null && lb != null) return la == lb
+    val da = a.content.toDoubleOrNull()
+    val db = b.content.toDoubleOrNull()
+    return da != null && db != null && da == db
 }
 
-internal fun JsonObject.set(key: String, value_: JsonElement?): JsonObject {
-	val value=value_ ?: JsonNull
-	if(!this.containsKey(key)) {
-		throw IndexOutOfBoundsException("Key[$key] doesn't exist")
-	}
-	return copy {
-		this[key] = value
-	}
-}
+/*
+ * Copy-on-write helpers for immutable kotlinx JsonElement containers
+ */
 
-internal fun JsonObject.addProperty(key: String, value: String): JsonObject {
-	return this.copy {
-		this[key] = JsonPrimitive(value)
-	}
-}
+internal fun JsonObject.with(key: String, value: JsonElement): JsonObject =
+    JsonObject(toMutableMap().also { it[key] = value })
 
-internal fun JsonObject.addProperty(key: String, value: Number): JsonObject {
-	return this.copy {
-		this[key] = JsonPrimitive(value)
-	}
-}
+internal fun JsonObject.without(key: String): JsonObject =
+    JsonObject(toMutableMap().also { it.remove(key) })
 
-private inline fun JsonObject.copy(mutatorBlock: MutableMap<String, JsonElement>.() -> Unit): JsonObject {
-	return JsonObject(this.toMutableMap().apply(mutatorBlock))
-}
+internal fun JsonObject.add(key: String, value: JsonElement): JsonObject = with(key, value)
+
+internal fun JsonObject.addProperty(key: String, value: String): JsonObject = with(key, JsonPrimitive(value))
+
+internal fun JsonObject.addProperty(key: String, value: Number): JsonObject = with(key, JsonPrimitive(value))
+
+internal fun JsonArray.add(value: JsonElement): JsonArray = JsonArray(this + value)
+
+internal fun JsonArray.inserted(index: Int, value: JsonElement): JsonArray =
+    JsonArray(toMutableList().also { it.add(index, value) })
+
+internal fun JsonArray.replacedAt(index: Int, value: JsonElement): JsonArray =
+    JsonArray(toMutableList().also { it[index] = value })
+
+internal fun JsonArray.removedAt(index: Int): JsonArray =
+    JsonArray(toMutableList().also { it.removeAt(index) })

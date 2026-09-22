@@ -15,9 +15,10 @@
 */
 
 package com.reidsync.kxjsonpatch
-import kotlinx.serialization.json.*
 
-class ApplyProcessor(private val target: JsonElement) : JsonPatchApplyProcessor(target.deepCopy()) {
+import kotlinx.serialization.json.JsonElement
+
+/** Applies a patch to [target]. [JsonElement] is immutable, so the input document is never modified. */
+class ApplyProcessor(target: JsonElement) : JsonPatchApplyProcessor(target) {
     fun result(): JsonElement = targetSource
 }
-

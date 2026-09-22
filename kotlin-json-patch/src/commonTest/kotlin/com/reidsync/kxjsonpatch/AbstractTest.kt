@@ -15,53 +15,59 @@
 */
 package com.reidsync.kxjsonpatch
 
-import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
-import kotlin.test.DefaultAsserter.fail
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFails
+import kotlin.test.assertFailsWith
+import kotlin.test.fail
 
-//@org.junit.runner.RunWith(org.junit.runners.Parameterized::class)
+/**
+ * Data-driven test runner. Fixtures have the shape
+ * `{ "errors": [ { "op", "node", "message"? } ], "ops": [ { "op", "node", "expected"?, "message"? } ] }`.
+ *
+ * Every "errors" case must throw [JsonPatchApplicationException] (or a subclass).
+ * Every "ops" case must apply without error and, when "expected" is present, produce exactly that document.
+ * All cases are executed and failures are reported together.
+ */
 abstract class AbstractTest {
     abstract fun data(): Collection<PatchTestCase>
 
     @Test
     fun test() {
-        val testData = data()
-        for (p in testData) {
-            if (p.isOperation) {
-                testOpertaion(p)
-            } else {
-                testError(p)
+        val failures = mutableListOf<String>()
+        for (case in data()) {
+            try {
+                if (case.isOperation) testOperation(case) else testError(case)
+            } catch (e: Throwable) {
+                failures += "[${describe(case.getNode())}] ${e::class.simpleName}: ${e.message}"
             }
+        }
+        if (failures.isNotEmpty()) {
+            fail("${failures.size} of ${data().size} cases failed:\n" + failures.joinToString("\n"))
         }
     }
 
-    private fun testOpertaion(p: PatchTestCase) {
-        val node: JsonObject = p.getNode()
-        val first: JsonElement = node.get("node")!!
-        val second: JsonElement = node.get("expected")!!
-        val patch: JsonElement = node.get("op")!!
-        val message = if (node.containsKey("message")) node.get("message").toString() else ""
-        val secondPrime: JsonElement =
-            JsonPatch.apply(patch.jsonArray, first)
-        assertEquals(secondPrime, second, message)
+    private fun testOperation(case: PatchTestCase) {
+        val node = case.getNode()
+        val source = node["node"]!!
+        val patch = node["op"]!!.jsonArray
+        val actual = JsonPatch.apply(patch, source)
+        val expected = node["expected"]
+        if (expected != null) {
+            assertEquals(expected, actual, describe(node))
+        }
     }
 
-    private fun testError(p:PatchTestCase) {
-        val node: JsonObject = p.getNode()
-        val first: JsonElement = node.get("node")!!
-        val patch: JsonElement = node.get("op")!!
-        try {
-            JsonPatch.apply(patch.jsonArray, first)
-            assertFails {
-                fail("Failure expected: " + node.get("message"))
-            }
-        }
-        catch (e: Exception) {
-            println("-> AssertFails with: ${e.message}")
+    private fun testError(case: PatchTestCase) {
+        val node = case.getNode()
+        val source = node["node"]!!
+        val patch = node["op"]!!.jsonArray
+        assertFailsWith<JsonPatchApplicationException>("expected failure: ${describe(node)}") {
+            JsonPatch.apply(patch, source)
         }
     }
+
+    private fun describe(node: JsonObject): String =
+        node["message"]?.toString() ?: "patch=${node["op"]} node=${node["node"]}"
 }

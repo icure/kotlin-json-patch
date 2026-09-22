@@ -89,7 +89,7 @@ const val TestData_JS_LIB_SAMPLES_UNSUPPORTED: String = """
     { "message": "replacing the root of the document is possible with add",
       "node": {"foo": "bar"},
       "op": [{"op": "add", "path": "", "value": {"baz": "qux"}}],
-      "expected": {"baz":"qux"}},
+      "expected": {"baz":"qux"}}
   ]
 }
 """

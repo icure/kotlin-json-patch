@@ -44,13 +44,8 @@ class JsonDiffTest {
         for (i in 0 until jsonNode.size) {
             val first: JsonElement = jsonNode.get(i).jsonObject.get("first")!!
             val second: JsonElement = jsonNode.get(i).jsonObject.get("second")!!
-            println("Test # $i")
-            println(first)
-            println(second)
             val actualPatch: JsonElement = JsonDiff.asJson(first, second)
-            println(actualPatch)
             val secondPrime: JsonElement = JsonPatch.apply(actualPatch, first)
-            println(secondPrime)
             assertEquals(second, secondPrime)
         }
     }
@@ -61,12 +56,7 @@ class JsonDiffTest {
             val first: JsonElement = TestDataGenerator.generate((0..10).random())
             val second: JsonElement = TestDataGenerator.generate((0..10).random())
             val actualPatch: JsonElement = JsonDiff.asJson(first, second)
-            println("Test # $i")
-            println(first)
-            println(second)
-            println(actualPatch)
             val secondPrime: JsonElement = JsonPatch.apply(actualPatch, first)
-            println(secondPrime)
             assertEquals(second, secondPrime)
         }
     }
@@ -80,9 +70,6 @@ class JsonDiffTest {
         val first = JsonObject(mapOf("key" to JsonPrimitive("value")))
         val second = JsonObject(emptyMap())
         val patch: JsonElement = JsonDiff.asJson(first, second)
-        println(first)
-        println(second)
-        println(patch)
         val expectedPatch = JsonArray(
             content =
                 listOf(
@@ -102,9 +89,6 @@ class JsonDiffTest {
         val first = JsonObject(emptyMap())
         val second = JsonObject(mapOf("key" to JsonPrimitive("value")))
         val patch: JsonElement = JsonDiff.asJson(first, second)
-        println(first)
-        println(second)
-        println(patch)
         val expectedPatch = JsonArray(
             content =
                 listOf(

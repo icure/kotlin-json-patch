@@ -1,8 +1,3 @@
-package com.reidsync.kxjsonpatch
-
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonNull
-
 /*
  * Copyright 2023 Reid Byun.
  *
@@ -19,31 +14,25 @@ import kotlinx.serialization.json.JsonNull
  * limitations under the License.
 */
 
-abstract class JsonPatchApplyProcessor(private val source: JsonElement = JsonNull) {
-	var targetSource: JsonElement = source
-		private set
+package com.reidsync.kxjsonpatch
 
-	open fun setSource(changedSource: JsonElement) {
-		targetSource = changedSource
-	}
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
+
+abstract class JsonPatchApplyProcessor(source: JsonElement = JsonNull) {
+    var targetSource: JsonElement = source
+        private set
+
+    open fun setSource(changedSource: JsonElement) {
+        targetSource = changedSource
+    }
+
+    /** Creates the context that receives one operation; [NoopProcessor] overrides it to skip application. */
+    internal open fun createContext(source: JsonElement): JsonPatchEditingContext = JsonPatchEditingContextImpl(source)
 }
-//
-//fun JsonPatchApplyProcessor.edit(actions: JsonPatchEditingContext.()->Unit) {
-//	val context = JsonPatchEditingContextImpl(source = this.targetSource)
-//	context.actions()
-//
-//	this.setSource(context.source)
-//}
 
-fun JsonPatchApplyProcessor.edit(actions: JsonPatchEditingContext.()->Unit) {
-	if (this is NoopProcessor) { // for test
-		val context = JsonPatchEditingContextTestImpl(source = this.targetSource)
-		context.actions()
-		this.setSource(context.source)
-	}
-	else {
-		val context = JsonPatchEditingContextImpl(source = this.targetSource)
-		context.actions()
-		this.setSource(context.source)
-	}
+fun JsonPatchApplyProcessor.edit(actions: JsonPatchEditingContext.() -> Unit) {
+    val context = createContext(targetSource)
+    context.actions()
+    setSource(context.document)
 }

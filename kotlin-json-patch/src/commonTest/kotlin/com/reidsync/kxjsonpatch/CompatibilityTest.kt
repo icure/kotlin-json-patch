@@ -24,14 +24,14 @@ import kotlin.test.assertEquals
 
 class CompatibilityTest {
     var mapper: GsonObjectMapper = GsonObjectMapper()
-    var addNodeWithMissingValue: JsonElement = mapper.readTree("[{\"op\":\"add\",\"path\":\"a\"}]")
-    var replaceNodeWithMissingValue: JsonElement = mapper.readTree("[{\"op\":\"replace\",\"path\":\"a\"}]")
+    var addNodeWithMissingValue: JsonElement = mapper.readTree("[{\"op\":\"add\",\"path\":\"/a\"}]")
+    var replaceNodeWithMissingValue: JsonElement = mapper.readTree("[{\"op\":\"replace\",\"path\":\"/a\"}]")
 
     @BeforeTest
     fun setUp() {
         mapper = GsonObjectMapper()
-        addNodeWithMissingValue = mapper.readTree("[{\"op\":\"add\",\"path\":\"a\"}]")
-        replaceNodeWithMissingValue = mapper.readTree("[{\"op\":\"replace\",\"path\":\"a\"}]")
+        addNodeWithMissingValue = mapper.readTree("[{\"op\":\"add\",\"path\":\"/a\"}]")
+        replaceNodeWithMissingValue = mapper.readTree("[{\"op\":\"replace\",\"path\":\"/a\"}]")
     }
 
     @Test
@@ -71,7 +71,7 @@ class CompatibilityTest {
     @Test
     fun withFlagReplaceNodeWithMissingValueShouldValidateCorrectly() {
         JsonPatch.validate(
-            addNodeWithMissingValue,
+            replaceNodeWithMissingValue,
             setOf(CompatibilityFlags.MISSING_VALUES_AS_NULLS)
         )
     }
