@@ -1,24 +1,27 @@
 # [kotlin-json-patch]
-[![CircleCI](https://dl.circleci.com/status-badge/img/circleci/FX4uQvXfdGbsC2LtLwAcHN/6WSq31hZUQd6ntmfk7zYqZ/tree/main.svg?style=svg&circle-token=726a635dd6621f418b6a9b009e03e14aff877c5b)](https://dl.circleci.com/status-badge/redirect/circleci/FX4uQvXfdGbsC2LtLwAcHN/6WSq31hZUQd6ntmfk7zYqZ/tree/main)
-[![CircleCI](https://dl.circleci.com/status-badge/img/circleci/FX4uQvXfdGbsC2LtLwAcHN/6WSq31hZUQd6ntmfk7zYqZ/tree/main.svg?style=shield&circle-token=726a635dd6621f418b6a9b009e03e14aff877c5b)](https://dl.circleci.com/status-badge/redirect/circleci/FX4uQvXfdGbsC2LtLwAcHN/6WSq31hZUQd6ntmfk7zYqZ/tree/main)
-[![Kotlin](https://img.shields.io/badge/kotlin-1.9.20-white.svg?logo=kotlin&color=6A5ACD)](http://kotlinlang.org/)
+[![Test](https://github.com/icure/kotlin-json-patch/actions/workflows/test.yml/badge.svg)](https://github.com/icure/kotlin-json-patch/actions/workflows/test.yml)
+[![Kotlin](https://img.shields.io/badge/kotlin-2.3.20-white.svg?logo=kotlin&color=6A5ACD)](http://kotlinlang.org/)
 [![Apache License](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?logo=apache)](https://www.apache.org/licenses/LICENSE-2.0.txt)
-[![Maven Central](https://img.shields.io/maven-central/v/io.github.reidsync/kotlin-json-patch?logo=sonatype&logoColor=D2691E&color=D2691E)](https://central.sonatype.com/artifact/io.github.reidsync/kotlin-json-patch/overview)
+[![Maven Central](https://img.shields.io/maven-central/v/com.icure/kotlin-json-patch?logo=sonatype&logoColor=D2691E&color=D2691E)](https://central.sonatype.com/artifact/com.icure/kotlin-json-patch/overview)
 
 ![badge-support-kotlin-multiplatform]
 ![badge-support-android-native]
 ![badge-support-apple-silicon]
-<a href="https://android-arsenal.com/api?level=24"><img alt="API" src="https://img.shields.io/badge/API-24%2B-brightgreen.svg?style=flat"/></a>  
+<a href="https://android-arsenal.com/api?level=23"><img alt="API" src="https://img.shields.io/badge/API-23%2B-brightgreen.svg?style=flat"/></a>  
 ![badge-platform-android]
 ![badge-platform-ios]
 ![badge-platform-jvm]
 ![badge-platform-js]
+![badge-platform-macos]
+![badge-platform-linux]
+![badge-platform-windows]
 
 ## Kotlin JSON Patching Library
 
 ### This is an implementation of [RFC 6902 JSON Patch](https://datatracker.ietf.org/doc/html/rfc6902) written exclusively in Kotlin.
 It is based on the [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0) licensed library from Flipkart, [zjsonpatch](https://github.com/flipkart-incubator/zjsonpatch).  
 This project is a fork of [KJsonPatch](https://github.com/beyondeye/kjsonpatch) (with the [latest commit referenced](https://github.com/beyondeye/kjsonpatch/commit/939455832a09de666d9578963676996b5e09b6be)).
+This repository is [iCure](https://github.com/icure)'s fork of [ReidSync/kotlin-json-patch](https://github.com/ReidSync/kotlin-json-patch): it fixes the RFC 6902 conformance issues listed below and is published under the `com.icure` group. See [NOTICE](NOTICE) for the attribution.
 
 ## Changes
 
@@ -29,7 +32,8 @@ This code has been modified from the original library in the following ways:
 * Added extensions for convenient usage of [`kotlinx.serialization.json`](https://kotlinlang.org/api/latest/kotlin.test/)
 
 ## Setup
-Add the dependency to your app module’s `build.gradle` file:
+The library is published on Maven Central under the `com.icure` group, as a Kotlin Multiplatform library (JVM, Android,
+iOS, macOS, Linux, Windows and JS targets).
 
 ```kotlin
 repositories {
@@ -37,26 +41,26 @@ repositories {
 }
 
 dependencies {
-    // e.g., implementation("io.github.reidsync:kotlin-json-patch:1.0.0")
-    implementation("io.github.reidsync:kotlin-json-patch:${kotliln_json_patch_version}")
+    implementation("com.icure:kotlin-json-patch:${kotlin_json_patch_version}")
 }
 ```
-> _**Check the [kotlin-json-patch versions](https://central.sonatype.com/artifact/io.github.reidsync/kotlin-json-patch/versions)**_  
-latest version : [![Maven Central](https://img.shields.io/maven-central/v/io.github.reidsync/kotlin-json-patch)](https://central.sonatype.com/artifact/io.github.reidsync/kotlin-json-patch/overview)  
+> _**Check the [kotlin-json-patch versions](https://central.sonatype.com/artifact/com.icure/kotlin-json-patch/versions)**_  
+latest version : [![Maven Central](https://img.shields.io/maven-central/v/com.icure/kotlin-json-patch)](https://central.sonatype.com/artifact/com.icure/kotlin-json-patch/overview)  
 
-You can add the dependency to `sourceSets.commonMain.dependecies` for your Kotlin Multiplatform project.
+You can add the dependency to `sourceSets.commonMain.dependencies` for your Kotlin Multiplatform project.
 
 ```kotlin
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            //put your multiplatform dependencies here
-            implementation("io.github.reidsync:kotlin-json-patch:${kotliln_json_patch_version}")
+            implementation("com.icure:kotlin-json-patch:${kotlin_json_patch_version}")
         }
     }
 }
-
 ```
+
+The library exposes `kotlinx.serialization`'s `JsonElement` and declares `kotlinx-serialization-json` as an `api`
+dependency, so you do not need to add it yourself.
 
 ## API Usage
 
@@ -112,6 +116,69 @@ The rules are pinned down by `Rfc6902RulesTest` and by the community [json-patch
   are now `JsonPatchApplicationException`.
 * `JsonPatchEditingContext` gained a `document` property; `JsonPatchEditingContextTestImpl` and the unused
   `JsonPatchProcessor` interface were removed.
+
+## Development
+
+Requirements: JDK 17 or newer, the Android SDK (`ANDROID_HOME` or `sdk.dir` in `local.properties`) and, for the Apple
+targets, Xcode. An optional `ios.simulator=<device name>` entry in `local.properties` selects the simulator used by the
+iOS tests.
+
+```shell
+./gradlew jvmTest testAndroidHostTest jsNodeTest      # host tests, also run by the CI on every pull request
+./gradlew macosArm64Test iosSimulatorArm64Test        # native tests (macOS only)
+./gradlew allTests                                    # everything the current host can run
+```
+
+## Testing a build in another project
+
+Publish the library to the local Maven repository and depend on it from there:
+
+```shell
+./gradlew publishToMavenLocal                 # publishes com.icure:kotlin-json-patch:0.0.1-SNAPSHOT
+./gradlew publishToMavenLocal -PgitTag=2.0.0  # publishes that version instead
+```
+
+The consuming project needs `mavenLocal()` in its repositories, before `mavenCentral()`:
+
+```kotlin
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+```
+
+## Releasing
+
+The library is released to [Maven Central](https://central.sonatype.com/artifact/com.icure/kotlin-json-patch) through
+the [Central Portal](https://central.sonatype.org/publish/publish-portal-gradle/), built on the iCure build machine
+driven by the private `icure/the-forge` repository, which holds this repository as a submodule. This is the same path
+the Cardinal SDK, charix and fhir-models take.
+
+To release:
+
+1. Publish a GitHub release here, tagged with a bare version such as `2.0.0` (no `v` prefix: the tag name becomes the
+   published version).
+2. [`trigger-forge.yml`](.github/workflows/trigger-forge.yml) moves the submodule on the-forge to the released commit
+   and tags it `kotlin-json-patch-2.0.0`.
+3. That tag triggers the-forge's "Publish kotlin-json-patch" workflow, which runs
+   `./gradlew publishAllPublicationsToMavenCentralRepository --no-configuration-cache -PgitTag=2.0.0` on the build
+   machine and releases the deployment once the Central Portal validates it.
+
+Maven Central versions are immutable, so a version can never be republished.
+
+This repository needs one secret, `THE_FORGE_CI_PAT`, a token allowed to push to `icure/the-forge`. The Central Portal
+credentials and the signing key live on the-forge, as they do for the other published libraries.
+
+A release can also be produced from a workstation, bypassing the-forge:
+
+```shell
+./gradlew publishAllPublicationsToMavenCentralRepository --no-configuration-cache -PgitTag=<version> \
+    -PmavenCentralUsername=... -PmavenCentralPassword=... \
+    -PsigningInMemoryKey=... -PsigningInMemoryKeyId=... -PsigningInMemoryKeyPassword=...
+```
+
+Publishing is refused when the signing properties are missing, since the Central Portal rejects unsigned artifacts.
+
 
 ## 
 These changes mostly involve porting from Java to Kotlin to transform it into a pure Kotlin library that can be imported into Kotlin Multiplatform. If you have any specific preferences or further adjustments, feel free to let me know!

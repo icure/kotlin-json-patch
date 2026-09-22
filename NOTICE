@@ -1,0 +1,12 @@
+kotlin-json-patch
+Copyright 2026 iCure (ICURE BELGIUM srl)
+
+This product is a fork of kotlin-json-patch by Reid Byun
+(https://github.com/ReidSync/kotlin-json-patch), itself derived from
+KJsonPatch (https://github.com/beyondeye/kjsonpatch) and from zjsonpatch,
+Copyright 2016 flipkart.com (https://github.com/flipkart-incubator/zjsonpatch).
+All of them are distributed under the Apache License, Version 2.0.
+
+The conformance fixtures in src/commonTest/kotlin/resources/json-patch-tests.json.kt
+come from https://github.com/json-patch/json-patch-tests, Copyright 2014 The Authors,
+distributed under the Apache License, Version 2.0.
