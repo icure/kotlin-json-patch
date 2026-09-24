@@ -16,19 +16,9 @@
 package com.reidsync.kxjsonpatch
 
 import resources.testdata.TestData_REPLACE
-import kotlin.test.Test
+import resources.testdata.TestData_REPLACE_UNSUPPORTED
 
-/**
- * @author ctranxuan (streamdata.io).
- */
 class ReplaceOperationTest : AbstractTest() {
-//    @org.junit.runners.Parameterized.Parameters
-    override fun data(): Collection<PatchTestCase> {
-        return PatchTestCase.load(TestData_REPLACE)
-    }
-
-    @Test
-    fun childTest() {
-        test()
-    }
+    override fun data(): Collection<PatchTestCase> =
+        PatchTestCase.load(TestData_REPLACE) + PatchTestCase.load(TestData_REPLACE_UNSUPPORTED)
 }

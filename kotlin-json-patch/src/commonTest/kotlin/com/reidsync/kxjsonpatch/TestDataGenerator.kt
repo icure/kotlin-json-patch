@@ -50,15 +50,15 @@ object TestDataGenerator {
         var jsonNode: JsonArray = JsonArray(emptyList())
         for (i in 0 until count) {
             var objectNode: JsonObject = JsonObject(emptyMap())
-            objectNode.addProperty(
+            objectNode = objectNode.addProperty(
                 "name",
                 name[random.nextInt(name.size)]
             )
-            objectNode.addProperty(
+            objectNode = objectNode.addProperty(
                 "age",
                 age[random.nextInt(age.size)]
             )
-            objectNode.addProperty(
+            objectNode = objectNode.addProperty(
                 "gender",
                 gender[random.nextInt(gender.size)]
             )
@@ -85,9 +85,9 @@ object TestDataGenerator {
 
 
     private fun getArrayNode(args: List<String>): JsonArray {
-        val countryNode: JsonArray = JsonArray(emptyList())
+        var countryNode: JsonArray = JsonArray(emptyList())
         for (arg in args) {
-            countryNode.add(JsonPrimitive(arg))
+            countryNode = countryNode.add(JsonPrimitive(arg))
         }
         return countryNode
     }

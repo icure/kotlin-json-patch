@@ -79,6 +79,40 @@ val result: JsonElement = source.apply(patch: patch)
 ```
 This operation is performed on a clone of the source object.
 
+## RFC 6902 compliance
+
+The patch engine follows [RFC 6902](https://datatracker.ietf.org/doc/html/rfc6902) and [RFC 6901](https://datatracker.ietf.org/doc/html/rfc6901) strictly.
+The rules are pinned down by `Rfc6902RulesTest` and by the community [json-patch-tests](https://github.com/json-patch/json-patch-tests) conformance suite, both in `commonTest`.
+
+* A patch is a JSON array of operation objects. `op` and `path` are required, `from` is required for `move`/`copy`,
+  and `value` is required for `add`/`replace`/`test`. Operation names are case-sensitive; unknown members are ignored.
+* JSON Pointers must be `""` (whole document) or start with `/`. `~0` and `~1` are decoded; any other `~` sequence is rejected.
+  Array indices are digits without leading zeros. `-` (append) is only valid as the target of `add`.
+* `add` requires the parent location to exist. `remove`, `replace`, `test` and the `from` of `move`/`copy` require the
+  target location to exist. `move` rejects a `path` located inside `from`. Removing the whole document is rejected.
+* `test` compares values as defined in section 4.6: numbers numerically (`1`, `1.0` and `1e0` are equal), strings by
+  characters, objects regardless of member order.
+* Any failure throws `JsonPatchApplicationException`; a malformed patch document throws its subclass
+  `InvalidJsonPatchException`. Documents are immutable, so a failed patch leaves the source untouched (section 5).
+* `JsonDiff.asJson(source, target)` always produces a patch that applies to `source` and yields `target`.
+
+### Compatibility flags
+
+`CompatibilityFlags.defaults()` is empty, i.e. strict. Pass `setOf(CompatibilityFlags.MISSING_VALUES_AS_NULLS)` to
+`JsonPatch.apply` / `JsonPatch.validate` to treat a missing `value` member as JSON `null` instead of rejecting the patch.
+
+### Breaking changes compared to 1.0.0
+
+* Missing `value` members are rejected by default (previously treated as `null`).
+* Pointers without a leading `/`, invalid `~` escapes, non-string `path`/`from`, uppercase operation names and array indices
+  with leading zeros are rejected (previously accepted or silently ignored).
+* Operations on non-existent locations fail instead of being silently ignored or corrupting the parent.
+* `move` into a child of `from` fails. `test` on the whole document compares instead of replacing it.
+* Failures that used to surface as `NumberFormatException`, `IndexOutOfBoundsException` or `NullPointerException`
+  are now `JsonPatchApplicationException`.
+* `JsonPatchEditingContext` gained a `document` property; `JsonPatchEditingContextTestImpl` and the unused
+  `JsonPatchProcessor` interface were removed.
+
 ## 
 These changes mostly involve porting from Java to Kotlin to transform it into a pure Kotlin library that can be imported into Kotlin Multiplatform. If you have any specific preferences or further adjustments, feel free to let me know!
 

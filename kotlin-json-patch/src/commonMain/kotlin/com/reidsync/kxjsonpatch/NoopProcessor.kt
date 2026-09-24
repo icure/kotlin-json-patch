@@ -18,14 +18,16 @@ package com.reidsync.kxjsonpatch
 
 import kotlinx.serialization.json.JsonElement
 
-/** A JSON patch processor that does nothing, intended for testing and validation.  */
+/** A JSON patch processor that does nothing, used by [JsonPatch.validate] to check patch structure only. */
 class NoopProcessor : JsonPatchApplyProcessor() {
+    override fun createContext(source: JsonElement): JsonPatchEditingContext = NoopEditingContext(source)
+
     companion object {
         val INSTANCE: NoopProcessor = NoopProcessor()
     }
 }
 
-class JsonPatchEditingContextTestImpl(var source: JsonElement): JsonPatchEditingContext {
+private class NoopEditingContext(override val document: JsonElement) : JsonPatchEditingContext {
     override fun remove(path: List<String>) {}
     override fun replace(path: List<String>, value: JsonElement) {}
     override fun add(path: List<String>, value: JsonElement) {}

@@ -1,18 +1,19 @@
 package com.reidsync.kxjsonpatch
 
-import kotlinx.serialization.json.*
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 
+internal enum class NodeType {
+    ARRAY,
+    OBJECT,
+    PRIMITIVE_OR_NULL;
 
-internal object NodeType {
-    val ARRAY = 1
-    val OBJECT = 2
-    //    static final int NULL=3;
-    val PRIMITIVE_OR_NULL = 3
-
-    fun getNodeType(node: JsonElement): Int {
-        if (node is JsonArray) return ARRAY
-        if (node is JsonObject) return OBJECT
-        //        if(node.isJsonNull()) return NULL;
-        return PRIMITIVE_OR_NULL
+    companion object {
+        fun of(node: JsonElement): NodeType = when (node) {
+            is JsonArray -> ARRAY
+            is JsonObject -> OBJECT
+            else -> PRIMITIVE_OR_NULL
+        }
     }
 }

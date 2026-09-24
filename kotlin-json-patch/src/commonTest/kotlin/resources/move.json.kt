@@ -17,6 +17,11 @@ const val TestData_MOVE: String = """
             "op": [{ "op": "move", "path": "/b/c" }],
             "node": { "a": "b" },
             "message": "Missing from field"
+        },
+        {
+            "op": [{ "op": "move", "from": "/0", "path": "/0/x" }],
+            "node": [ "victim", {}, {} ],
+            "message": "RFC 6902 4.4: 'from' must not be a proper prefix of 'path' (a location cannot be moved into one of its children)"
         }
     ],
     "ops": [
@@ -29,11 +34,6 @@ const val TestData_MOVE: String = """
             "op": [{ "op": "move", "from": "/x/a", "path": "/x/a" }],
             "node": { "x": { "a": "helo" } },
             "expected": { "x": { "a": "helo" } }
-        },
-        {
-            "op": [{ "op": "move", "from": "/0", "path": "/0/x" }],
-            "node": [ "victim", {}, {} ],
-            "expected": [ { "x": "victim" }, {} ]
         },
         {
             "op": [{ "op": "move", "from": "/0", "path": "/-" }],

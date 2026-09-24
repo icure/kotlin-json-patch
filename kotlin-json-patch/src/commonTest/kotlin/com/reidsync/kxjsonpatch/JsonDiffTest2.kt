@@ -6,6 +6,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import resources.testdata.TestData_DIFF
+import resources.testdata.TestData_DIFF_UNSUPPORTED
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -32,7 +33,7 @@ class JsonDiffTest2 {
     lateinit var jsonNode: JsonArray
     @BeforeTest
     fun setUp() {
-        jsonNode = objectMapper.readTree(TestData_DIFF).jsonArray
+        jsonNode = JsonArray(objectMapper.readTree(TestData_DIFF).jsonArray + objectMapper.readTree(TestData_DIFF_UNSUPPORTED).jsonArray)
     }
 
     @Test

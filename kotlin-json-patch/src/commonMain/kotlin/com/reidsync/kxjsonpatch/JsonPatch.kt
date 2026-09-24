@@ -16,85 +16,70 @@
 
 package com.reidsync.kxjsonpatch
 
-import kotlinx.serialization.json.*
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
+/**
+ * RFC 6902 JSON Patch: validation and application of patch documents.
+ *
+ * Structural problems with the patch document itself are reported as [InvalidJsonPatchException];
+ * problems applying an operation to the target document as [JsonPatchApplicationException].
+ * The source document is never mutated; on failure it is left untouched (RFC 6902 section 5).
+ */
 object JsonPatch {
-    internal var op = Operations()
-    internal var consts = Constants()
+    private fun requireMember(operation: JsonObject, member: String): JsonElement =
+        operation[member] ?: throw InvalidJsonPatchException("Invalid JSON Patch payload (missing '$member' field)")
 
-    private fun getPatchAttr(jsonNode: JsonObject, attr: String): JsonElement {
-        val child = jsonNode.get(attr) ?: throw InvalidJsonPatchException("Invalid JSON Patch payload (missing '$attr' field)")
-        return child
-    }
+    private fun value(operation: JsonObject, flags: Set<CompatibilityFlags>): JsonElement =
+        operation[PatchMember.VALUE]
+            ?: if (CompatibilityFlags.MISSING_VALUES_AS_NULLS in flags) JsonNull
+            else throw InvalidJsonPatchException("Invalid JSON Patch payload (missing '${PatchMember.VALUE}' field)")
 
-    private fun getPatchAttrWithDefault(jsonNode: JsonObject, attr: String, defaultValue: JsonElement): JsonElement {
-        val child = jsonNode.get(attr)
-        if (child == null)
-            return defaultValue
-        else
-            return child
-    }
+    private fun operationName(element: JsonElement): String =
+        (element as? JsonPrimitive)?.takeIf { it.isString }?.content
+            ?: throw InvalidJsonPatchException("Invalid JSON Patch payload ('${PatchMember.OP}' must be a string, was $element)")
 
     @Throws(InvalidJsonPatchException::class)
     private fun process(patch: JsonElement, processor: JsonPatchApplyProcessor, flags: Set<CompatibilityFlags>) {
+        if (patch !is JsonArray) throw InvalidJsonPatchException("Invalid JSON Patch payload (not an array)")
+        for (element in patch) {
+            val operation = element as? JsonObject
+                ?: throw InvalidJsonPatchException("Invalid JSON Patch payload (operation is not an object: $element)")
+            val type = Operation.fromName(operationName(requireMember(operation, PatchMember.OP)))
+            val path = JsonPointer.parse(requireMember(operation, PatchMember.PATH), PatchMember.PATH)
 
-        if (patch !is JsonArray)
-            throw InvalidJsonPatchException("Invalid JSON Patch payload (not an array)")
-        val operations = patch.jsonArray.iterator()
-        while (operations.hasNext()) {
-            val jsonNode_ = operations.next()
-            if (jsonNode_ !is JsonObject) throw InvalidJsonPatchException("Invalid JSON Patch payload (not an object)")
-            val jsonNode = jsonNode_.jsonObject
-            val operation = op.opFromName(getPatchAttr(jsonNode.jsonObject, consts.OP).toString().replace("\"".toRegex(), ""))
-            val path = getPath(getPatchAttr(jsonNode, consts.PATH))
-
-            when (operation) {
-                op.REMOVE -> {
-                    processor.edit { remove(path) }
-                }
-
-                op.ADD -> {
-                    val value: JsonElement
-                    if (!flags.contains(CompatibilityFlags.MISSING_VALUES_AS_NULLS))
-                        value = getPatchAttr(jsonNode, consts.VALUE)
-                    else
-                        value = getPatchAttrWithDefault(jsonNode, consts.VALUE, JsonNull)
+            when (type) {
+                Operation.REMOVE -> processor.edit { remove(path) }
+                Operation.ADD -> {
+                    val value = value(operation, flags)
                     processor.edit { add(path, value) }
                 }
-
-                op.REPLACE -> {
-                    val value: JsonElement
-                    if (!flags.contains(CompatibilityFlags.MISSING_VALUES_AS_NULLS))
-                        value = getPatchAttr(jsonNode, consts.VALUE)
-                    else
-                        value = getPatchAttrWithDefault(jsonNode, consts.VALUE, JsonNull)
+                Operation.REPLACE -> {
+                    val value = value(operation, flags)
                     processor.edit { replace(path, value) }
                 }
-
-                op.MOVE -> {
-                    val fromPath = getPath(getPatchAttr(jsonNode, consts.FROM))
+                Operation.MOVE -> {
+                    val fromPath = JsonPointer.parse(requireMember(operation, PatchMember.FROM), PatchMember.FROM)
                     processor.edit { move(fromPath, path) }
                 }
-
-                op.COPY -> {
-                    val fromPath = getPath(getPatchAttr(jsonNode, consts.FROM))
+                Operation.COPY -> {
+                    val fromPath = JsonPointer.parse(requireMember(operation, PatchMember.FROM), PatchMember.FROM)
                     processor.edit { copy(fromPath, path) }
                 }
-
-                op.TEST -> {
-                    val value: JsonElement
-                    if (!flags.contains(CompatibilityFlags.MISSING_VALUES_AS_NULLS))
-                        value = getPatchAttr(jsonNode, consts.VALUE)
-                    else
-                        value = getPatchAttrWithDefault(jsonNode, consts.VALUE, JsonNull)
+                Operation.TEST -> {
+                    val value = value(operation, flags)
                     processor.edit { test(path, value) }
                 }
             }
         }
     }
 
+    /** Checks that [patch] is a well-formed RFC 6902 document without applying it. */
     @Throws(InvalidJsonPatchException::class)
     @JvmStatic
     @JvmOverloads
@@ -102,6 +87,7 @@ object JsonPatch {
         process(patch, NoopProcessor.INSTANCE, flags)
     }
 
+    /** Applies [patch] to [source] and returns the resulting document. [source] is not modified. */
     @Throws(JsonPatchApplicationException::class)
     @JvmStatic
     @JvmOverloads
@@ -109,18 +95,5 @@ object JsonPatch {
         val processor = ApplyProcessor(source)
         process(patch, processor, flags)
         return processor.result()
-    }
-
-
-    private fun decodePath(path: String): String {
-        return path.replace("~1".toRegex(), "/").replace("~0".toRegex(), "~") // see http://tools.ietf.org/html/rfc6901#section-4
-    }
-
-    private fun getPath(path: JsonElement): List<String> {
-        //        List<String> paths = Splitter.on('/').splitToList(path.toString().replaceAll("\"", ""));
-        //        return Lists.newArrayList(Iterables.transform(paths, DECODE_PATH_FUNCTION));
-        val pathstr = path.toString().replace("\"", "")
-        val paths = pathstr.split("/")
-        return paths.map { decodePath(it) }
     }
 }
