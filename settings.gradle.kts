@@ -1,8 +1,7 @@
-enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 pluginManagement {
     repositories {
-        google()
         gradlePluginPortal()
+        google()
         mavenCentral()
     }
 }
@@ -14,6 +13,4 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Kotlin-Json-Patching-Library"
-include(":kotlin-json-patch")
-includeBuild("convention-plugins")
+rootProject.name = "kotlin-json-patch"
