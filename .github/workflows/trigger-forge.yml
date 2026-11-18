@@ -1,0 +1,49 @@
+# Publishing happens on the Mac Mini driven by the private icure/the-forge repository, which holds this repository
+# as a submodule. Publishing a GitHub release here moves that submodule to the released commit and tags it
+# `kotlin-json-patch-<version>`, which is what the-forge's "Publish kotlin-json-patch" workflow triggers on.
+#
+# Requires the THE_FORGE_CI_PAT secret: a token allowed to push to icure/the-forge.
+# Tag releases as a bare version (`2.0.0`, not `v2.0.0`): the tag name becomes the published version.
+name: Trigger the release on the-forge
+
+on:
+    release:
+        types:
+            - published
+            - prereleased
+
+jobs:
+    update-submodule:
+        name: Update the submodule on the-forge
+        runs-on: ubuntu-latest
+        steps:
+            -   name: Check out the-forge
+                uses: actions/checkout@v4
+                with:
+                    repository: icure/the-forge
+                    token: ${{ secrets.THE_FORGE_CI_PAT }}
+                    ref: main
+                    submodules: true
+                    fetch-tags: true
+
+            -   name: Configure git
+                run: |
+                    git config user.name "github-actions[bot]"
+                    git config user.email "github-actions[bot]@users.noreply.github.com"
+
+            -   name: Move the submodule to the released commit
+                run: |
+                    git submodule update --remote --recursive kotlin-json-patch
+                    git add kotlin-json-patch
+
+            -   name: Commit and tag
+                env:
+                    RELEASE_TAG: ${{ github.event.release.tag_name }}
+                run: |
+                    if git diff --cached --quiet; then
+                      echo "The submodule already points at the released commit, nothing to do."
+                      exit 0
+                    fi
+                    git commit -m "chore: update the kotlin-json-patch submodule for release $RELEASE_TAG"
+                    git tag -a "kotlin-json-patch-$RELEASE_TAG" -m "Publish kotlin-json-patch $RELEASE_TAG"
+                    git push --follow-tags
