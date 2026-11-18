@@ -2,7 +2,6 @@
 [![Test](https://github.com/icure/kotlin-json-patch/actions/workflows/test.yml/badge.svg)](https://github.com/icure/kotlin-json-patch/actions/workflows/test.yml)
 [![Kotlin](https://img.shields.io/badge/kotlin-2.3.20-white.svg?logo=kotlin&color=6A5ACD)](http://kotlinlang.org/)
 [![Apache License](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?logo=apache)](https://www.apache.org/licenses/LICENSE-2.0.txt)
-[![Maven Central](https://img.shields.io/maven-central/v/com.icure/kotlin-json-patch?logo=sonatype&logoColor=D2691E&color=D2691E)](https://central.sonatype.com/artifact/com.icure/kotlin-json-patch/overview)
 
 ![badge-support-kotlin-multiplatform]
 ![badge-support-android-native]
@@ -32,20 +31,30 @@ This code has been modified from the original library in the following ways:
 * Added extensions for convenient usage of [`kotlinx.serialization.json`](https://kotlinlang.org/api/latest/kotlin.test/)
 
 ## Setup
-The library is published on Maven Central under the `com.icure` group, as a Kotlin Multiplatform library (JVM, Android,
-iOS, macOS, Linux, Windows and JS targets).
+The library is published to iCure's Google Artifact Registry under the `com.icure` group, as a Kotlin Multiplatform
+library (JVM, Android, iOS, macOS, Linux, Windows and JS targets). The repository is private: reading it requires a
+Google account or service account granted read access to it.
+
+The [Artifact Registry Gradle plugin](https://github.com/GoogleCloudPlatform/artifact-registry-maven-tools) resolves
+the `artifactregistry://` scheme and authenticates with your Application Default Credentials
+(`gcloud auth application-default login`), or with gcloud.
 
 ```kotlin
+plugins {
+    id("com.google.cloud.artifactregistry.gradle-plugin") version "2.2.5"
+}
+
 repositories {
     mavenCentral()
+    maven {
+        url = uri("artifactregistry://europe-west1-maven.pkg.dev/taktik-icure/kotlin-json-patch")
+    }
 }
 
 dependencies {
     implementation("com.icure:kotlin-json-patch:${kotlin_json_patch_version}")
 }
 ```
-> _**Check the [kotlin-json-patch versions](https://central.sonatype.com/artifact/com.icure/kotlin-json-patch/versions)**_  
-latest version : [![Maven Central](https://img.shields.io/maven-central/v/com.icure/kotlin-json-patch)](https://central.sonatype.com/artifact/com.icure/kotlin-json-patch/overview)  
 
 You can add the dependency to `sourceSets.commonMain.dependencies` for your Kotlin Multiplatform project.
 
@@ -149,10 +158,9 @@ repositories {
 
 ## Releasing
 
-The library is released to [Maven Central](https://central.sonatype.com/artifact/com.icure/kotlin-json-patch) through
-the [Central Portal](https://central.sonatype.org/publish/publish-portal-gradle/), built on the iCure build machine
-driven by the private `icure/the-forge` repository, which holds this repository as a submodule. This is the same path
-the Cardinal SDK, charix and fhir-models take.
+The library is released to the `kotlin-json-patch` Maven repository of iCure's Google Artifact Registry
+(`europe-west1-maven.pkg.dev/taktik-icure/kotlin-json-patch`), built on the iCure build machine driven by the private
+`icure/the-forge` repository, which holds this repository as a submodule.
 
 To release:
 
@@ -161,23 +169,19 @@ To release:
 2. [`trigger-forge.yml`](.github/workflows/trigger-forge.yml) moves the submodule on the-forge to the released commit
    and tags it `kotlin-json-patch-2.0.0`.
 3. That tag triggers the-forge's "Publish kotlin-json-patch" workflow, which runs
-   `./gradlew publishAllPublicationsToMavenCentralRepository --no-configuration-cache -PgitTag=2.0.0` on the build
-   machine and releases the deployment once the Central Portal validates it.
+   `./gradlew publishAllPublicationsToArtifactRegistryRepository --no-configuration-cache -PgitTag=2.0.0` on the
+   macOS build machine (the Apple targets only build on macOS).
 
-Maven Central versions are immutable, so a version can never be republished.
+This repository needs one secret, `THE_FORGE_CI_PAT`, a token allowed to push to `icure/the-forge`. The key of the
+service account that writes to Artifact Registry lives on the-forge.
 
-This repository needs one secret, `THE_FORGE_CI_PAT`, a token allowed to push to `icure/the-forge`. The Central Portal
-credentials and the signing key live on the-forge, as they do for the other published libraries.
-
-A release can also be produced from a workstation, bypassing the-forge:
+A release can also be produced from a macOS workstation, bypassing the-forge, with an account allowed to write to the
+repository:
 
 ```shell
-./gradlew publishAllPublicationsToMavenCentralRepository --no-configuration-cache -PgitTag=<version> \
-    -PmavenCentralUsername=... -PmavenCentralPassword=... \
-    -PsigningInMemoryKey=... -PsigningInMemoryKeyId=... -PsigningInMemoryKeyPassword=...
+gcloud auth application-default login
+./gradlew publishAllPublicationsToArtifactRegistryRepository --no-configuration-cache -PgitTag=<version>
 ```
-
-Publishing is refused when the signing properties are missing, since the Central Portal rejects unsigned artifacts.
 
 
 ## 

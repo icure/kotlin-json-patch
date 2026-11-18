@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidKotlinMultiplatformLibrary)
     alias(libs.plugins.vanniktech.mavenPublish)
+    alias(libs.plugins.artifactRegistry)
 }
 
 // Set by the-forge when it publishes a release (-PgitTag=x.y.z, taken from the tag it was triggered by).
@@ -80,13 +81,6 @@ tasks.withType<Test>().configureEach {
     }
 }
 
-// Maven Central requires signed artifacts. The signing key is read from the `signingInMemoryKey`,
-// `signingInMemoryKeyId` and `signingInMemoryKeyPassword` Gradle properties, and the Central Portal credentials
-// from `mavenCentralUsername` / `mavenCentralPassword` (vanniktech maven-publish conventions). On the CI they are
-// passed as ORG_GRADLE_PROJECT_* environment variables.
-val hasSigningProperties = listOf("signingInMemoryKey", "signingInMemoryKeyId", "signingInMemoryKeyPassword")
-    .all { providers.gradleProperty(it).isPresent }
-
 mavenPublishing {
     coordinates(group.toString(), rootProject.name, version.toString())
 
@@ -115,22 +109,16 @@ mavenPublishing {
             developerConnection = "scm:git:ssh://git@github.com:icure/kotlin-json-patch.git"
         }
     }
-
-    publishToMavenCentral(automaticRelease = true)
-    if (hasSigningProperties) {
-        signAllPublications()
-    }
 }
 
-// Publishing unsigned artifacts to Maven Central is rejected by the Central Portal, so fail before uploading
-// rather than halfway through the deployment.
-if (!hasSigningProperties) {
-    tasks.withType<PublishToMavenRepository>().configureEach {
-        doFirst {
-            throw GradleException(
-                "Cannot publish to Maven Central without the signingInMemoryKey, signingInMemoryKeyId and " +
-                    "signingInMemoryKeyPassword properties"
-            )
+// Published to Google Artifact Registry. The artifactregistry:// scheme lets the Artifact Registry plugin authenticate
+// with Application Default Credentials, then gcloud: on the-forge, GOOGLE_APPLICATION_CREDENTIALS points at the key of
+// a service account allowed to write to the repository. Builds that do not publish need no credentials.
+publishing {
+    repositories {
+        maven {
+            name = "ArtifactRegistry"
+            url = uri("artifactregistry://europe-west1-maven.pkg.dev/taktik-icure/kotlin-json-patch")
         }
     }
 }
