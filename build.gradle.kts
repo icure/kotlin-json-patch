@@ -7,7 +7,13 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidKotlinMultiplatformLibrary)
     alias(libs.plugins.vanniktech.mavenPublish)
-    alias(libs.plugins.artifactRegistry)
+    alias(libs.plugins.artifactRegistry) apply false
+}
+
+// The Artifact Registry plugin looks for credentials as soon as it is applied, and fails the build when it falls back to
+// a gcloud that is installed but not logged in, as on the GitHub-hosted runners. Only apply it when publishing there.
+if (gradle.startParameter.taskNames.any { "ArtifactRegistry" in it }) {
+    apply(plugin = "com.google.cloud.artifactregistry.gradle-plugin")
 }
 
 // Set by the-forge when it publishes a release (-PgitTag=x.y.z, taken from the tag it was triggered by).
