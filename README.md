@@ -31,24 +31,14 @@ This code has been modified from the original library in the following ways:
 * Added extensions for convenient usage of [`kotlinx.serialization.json`](https://kotlinlang.org/api/latest/kotlin.test/)
 
 ## Setup
-The library is published to iCure's Google Artifact Registry under the `com.icure` group, as a Kotlin Multiplatform
-library (JVM, Android, iOS, macOS, Linux, Windows and JS targets). The repository is private: reading it requires a
-Google account or service account granted read access to it.
-
-The [Artifact Registry Gradle plugin](https://github.com/GoogleCloudPlatform/artifact-registry-maven-tools) resolves
-the `artifactregistry://` scheme and authenticates with your Application Default Credentials
-(`gcloud auth application-default login`), or with gcloud.
+The library is published to iCure's public Maven repository on Google Artifact Registry under the `com.icure` group,
+as a Kotlin Multiplatform library (JVM, Android, iOS, macOS, Linux, Windows and JS targets). The repository can be read
+without credentials.
 
 ```kotlin
-plugins {
-    id("com.google.cloud.artifactregistry.gradle-plugin") version "2.2.5"
-}
-
 repositories {
     mavenCentral()
-    maven {
-        url = uri("artifactregistry://europe-west1-maven.pkg.dev/taktik-icure/kotlin-json-patch")
-    }
+    maven("https://europe-west1-maven.pkg.dev/taktik-icure/maven-icure-public")
 }
 
 dependencies {
@@ -158,8 +148,8 @@ repositories {
 
 ## Releasing
 
-The library is released to the `kotlin-json-patch` Maven repository of iCure's Google Artifact Registry
-(`europe-west1-maven.pkg.dev/taktik-icure/kotlin-json-patch`), built on the iCure build machine driven by the private
+The library is released to iCure's public Maven repository on Google Artifact Registry
+(`europe-west1-maven.pkg.dev/taktik-icure/maven-icure-public`), built on the iCure build machine driven by the private
 `icure/the-forge` repository, which holds this repository as a submodule.
 
 To release:

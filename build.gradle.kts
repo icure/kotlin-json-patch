@@ -111,14 +111,15 @@ mavenPublishing {
     }
 }
 
-// Published to Google Artifact Registry. The artifactregistry:// scheme lets the Artifact Registry plugin authenticate
-// with Application Default Credentials, then gcloud: on the-forge, GOOGLE_APPLICATION_CREDENTIALS points at the key of
-// a service account allowed to write to the repository. Builds that do not publish need no credentials.
+// Published to iCure's public Maven repository on Google Artifact Registry, which anyone can read. Writing to it
+// needs credentials: the artifactregistry:// scheme lets the Artifact Registry plugin authenticate with Application
+// Default Credentials, then gcloud. On the-forge, GOOGLE_APPLICATION_CREDENTIALS points at the key of a service
+// account allowed to write to the repository. Builds that do not publish need no credentials.
 publishing {
     repositories {
         maven {
             name = "ArtifactRegistry"
-            url = uri("artifactregistry://europe-west1-maven.pkg.dev/taktik-icure/kotlin-json-patch")
+            url = uri("artifactregistry://europe-west1-maven.pkg.dev/taktik-icure/maven-icure-public")
         }
     }
 }
